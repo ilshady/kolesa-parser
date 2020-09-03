@@ -1,7 +1,7 @@
 import pymysql.cursors
 
 
-class Requests:
+class Queries:
 
     def __init__(self, database):
         """Подключаемся к БД и сохраняем курсор соединения"""
@@ -11,7 +11,7 @@ class Requests:
     def get_subscriptions(self, status = True):
         """Получаем всех активных подписчиков бота"""
         with self.connection:
-            result = self.cursor.execute("SELECT * FROM `users` WHERE `status` = %s", (status,))
+            result = self.cursor.execute("SELECT * FROM `users` WHERE `status` = %s", (status))
             result = self.cursor.fetchall()
             return result
 
@@ -31,6 +31,16 @@ class Requests:
         """Обновляем статус подписки пользователя"""
         with self.connection:
             return self.cursor.execute("UPDATE `users` SET `status` = %s WHERE `user_id` = %s", (status, user_id))
+    
+    def check_item_db(self,post_id):
+        """Получаем все записи с таблицы"""
+        with self.connection:
+            result = self.cursor.execute('SELECT * FROM posts WHERE post_id = %s', (int(post_id)))
+            result = self.cursor.fetchmany(60)
+            return result
+    def send_to_db(self,post_id,link):
+        with self.connection:
+            return self.cursor.execute("INSERT INTO posts (post_id, link ) VALUES (%s,%s)",(post_id, link))
 
     def close(self):
         """Закрываем соединение с БД"""
