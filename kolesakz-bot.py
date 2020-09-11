@@ -26,7 +26,8 @@ con = pymysql.connect(
 
 db = Queries(con)
 
-URL = 'https://kolesa.kz/cars/toyota/camry/almaty/'
+URLs = ['https://kolesa.kz/cars/honda/cr-v/region-almatinskaya-oblast/?_sys-hasphoto=2&year[from]=1996&year[to]=2001&price[to]=2%20600%20000',
+		'https://kolesa.kz/cars/toyota/camry/region-almatinskaya-oblast/?_sys-hasphoto=2&auto-custom=2&year[from]=2005&year[to]=2007&price[to]=4%20500%20000']
 
 HEADERS = {'user-agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36', 'accept': '*/*'}
 
@@ -49,21 +50,21 @@ def get_content(html):
     return cars 
 
 def parse():
-    html = get_html(URL)
-    if html.status_code == 200:
-        cars = []
-        for page in range(1, 3):
-            html = get_html(URL, params={'page': page})
-            #print(html.url)
-            cars.extend(get_content(html.text))
-            
-        #print(cars)
-    else:
-        print('Error')
+	for url in URLs:
+		html = get_html(url)
+		if html.status_code == 200:
+			cars = []
+			for page in range(1, 3):
+				html = get_html(url, params={'page': page})
+				print(html.url)
+				cars.extend(get_content(html.text))
+				
+			print(cars)
+		else:
+			print('Error')
 
 
 
-            #send_telegram(car['link'])
 
 #echo
 @dp.message_handler(commands=['subscribe'])
@@ -88,6 +89,9 @@ async def unsubscribe(message: types.Message):
 		db.update_subscription(message.from_user.id, 0)
 		await message.answer("Вы успешно отписаны от рассылки.")
 
+@dp.message_handler(commands=['start'])
+async def send_welcome(message: types.Message):
+	await message.reply("Здарова")
 
 async def scheduled(wait_for):
 	while True:
@@ -107,5 +111,5 @@ async def scheduled(wait_for):
 
 # long polling
 if __name__ == "__main__":
-	dp.loop.create_task(scheduled(180))
+	dp.loop.create_task(scheduled(10))
 	executor.start_polling(dp, skip_updates=True)
