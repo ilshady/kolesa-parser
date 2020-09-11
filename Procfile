@@ -1,1 +1,1 @@
-job: kolesakz-bot.py
+job: python kolesakz-bot.py
