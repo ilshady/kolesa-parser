@@ -1,5 +1,5 @@
-import config
-import logging
+#import config
+#import logging
 import pymysql
 import requests
 import asyncio
@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from aiogram import Bot,Dispatcher,executor, types
 from queries import Queries
 #log level
-logging.basicConfig(level=logging.INFO)
+#logging.basicConfig(level=logging.INFO)
 
 #initialize
 bot = Bot(token=config.API_TOKEN)
@@ -23,7 +23,6 @@ con = pymysql.connect(
     charset='utf8mb4',
     cursorclass=pymysql.cursors.DictCursor
 )
-
 db = Queries(con)
 
 URLs = ['https://kolesa.kz/cars/honda/cr-v/region-almatinskaya-oblast/?_sys-hasphoto=2&year[from]=1996&year[to]=2001&price[to]=2%20600%20000',
