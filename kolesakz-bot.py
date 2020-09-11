@@ -1,4 +1,4 @@
-#import config
+import config
 #import logging
 import pymysql
 import requests
