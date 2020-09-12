@@ -58,7 +58,7 @@ def parse():
 				print(html.url)
 				cars.extend(get_content(html.text))
 				
-			print(cars)
+			#print(cars)
 		else:
 			print('Error')
 
@@ -110,8 +110,8 @@ async def scheduled(wait_for):
 
 # long polling
 if __name__ == "__main__":
-	#dp.loop.create_task(scheduled(10))
-	asyncio.run(scheduled(10))
+	dp.loop.create_task(scheduled(30))
+	#asyncio.run(scheduled(10))
 	executor.start_polling(dp, skip_updates=True)
 	
 	
