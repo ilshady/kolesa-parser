@@ -33,6 +33,7 @@ HEADERS = {'user-agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) Apple
 HOST = 'https://kolesa.kz'
 
 cars = []
+posts = db.check_item_db()
 
 def get_html(url, params=None):
     req = requests.get(url,headers=HEADERS,params=params)
@@ -40,11 +41,11 @@ def get_html(url, params=None):
 
 def get_content(html):
     soup = BeautifulSoup(html,'html.parser')
-    items = soup.find_all('a', class_='ddl_product_link')
+    items = soup.find_all('div', class_='a-info-top')
     for item in items:
         cars.append({
-            'post_id' : item.get('data-product-id'),
-            'link' : HOST + item.get('href')
+            'post_id' : item.find('a', class_='ddl_product_link').get('data-product-id'),
+            'link' : HOST + item.find('a', class_='ddl_product_link').get('href')
         })
     return cars 
 
@@ -52,18 +53,24 @@ def parse():
 	for url in URLs:
 		html = get_html(url)
 		if html.status_code == 200:
-			cars = []
+			#cars = []
 			for page in range(1, 3):
 				html = get_html(url, params={'page': page})
-				print(html.url)
+				#print(html.url)
 				cars.extend(get_content(html.text))
+				#print(cars)
 				
-			#print(cars)
+			
 		else:
 			print('Error')
+non_match = []
+def non_match_elements(list_a, list_b):
+    for i in list_a:
+        if i not in list_b:
+            non_match.append(i)
+    return non_match
 
-
-
+        
 
 #echo
 @dp.message_handler(commands=['subscribe'])
@@ -96,16 +103,17 @@ async def scheduled(wait_for):
 	while True:
 		await asyncio.sleep(wait_for)
 		parse()
-		for car in cars:
-			elem_exists = db.check_item_db(car['post_id'])
-			if not elem_exists:
-				db.send_to_db(car['post_id'], car['link'])
-				subscriptions = db.get_subscriptions()
-            # Отправка в телеграм
-				for s in subscriptions:
-					await bot.send_message(
-						s['user_id'],
-						car['link']
+		non_match = non_match_elements(cars, posts)
+		#print("cars:", cars)
+		#print("posts:", posts)
+		for car in non_match:
+			db.send_to_db(car['post_id'], car['link'])
+			subscriptions = db.get_subscriptions()
+				# Отправка в телеграм
+			for s in subscriptions:
+				await bot.send_message(
+					s['user_id'],
+					car['link']
 					)
 
 # long polling
