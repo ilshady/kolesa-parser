@@ -1,5 +1,5 @@
 import config
-#import logging
+import logging
 import pymysql
 import requests
 import asyncio
@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from aiogram import Bot,Dispatcher,executor, types
 from queries import Queries
 #log level
-#logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO)
 
 #initialize
 bot = Bot(token=config.API_TOKEN)
@@ -110,5 +110,8 @@ async def scheduled(wait_for):
 
 # long polling
 if __name__ == "__main__":
-	dp.loop.create_task(scheduled(120))
+	#dp.loop.create_task(scheduled(10))
+	asyncio.run(scheduled(10))
 	executor.start_polling(dp, skip_updates=True)
+	
+	

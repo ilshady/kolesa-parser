@@ -7,6 +7,7 @@ class Queries:
         """Подключаемся к БД и сохраняем курсор соединения"""
         self.connection = database
         self.cursor = self.connection.cursor()
+        print("connected")
 
     def get_subscriptions(self, status = True):
         """Получаем всех активных подписчиков бота"""
