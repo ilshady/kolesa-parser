@@ -41,7 +41,7 @@ class Queries:
         """Получаем все записи с таблицы"""
         with self.connection:
             result = self.cursor.execute('SELECT post_id,link FROM posts')
-            result = self.cursor.fetchmany(10)
+            result = self.cursor.fetchmany(120)
             #print(result)
             return result
     def send_to_db(self,post_id,link):

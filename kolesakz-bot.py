@@ -25,8 +25,9 @@ con = pymysql.connect(
 )
 db = Queries(con)
 
-URLs = ['https://kolesa.kz/cars/honda/cr-v/region-almatinskaya-oblast/?_sys-hasphoto=2&year[from]=1996&year[to]=2001&price[to]=2%20600%20000',
-		'https://kolesa.kz/cars/toyota/camry/region-almatinskaya-oblast/?_sys-hasphoto=2&auto-custom=2&year[from]=2005&year[to]=2007&price[to]=4%20500%20000']
+URL = ['https://kolesa.kz/cars/toyota/camry/region-almatinskaya-oblast/?_sys-hasphoto=2&auto-custom=2&year[from]=2005&year[to]=2007&price[to]=4%20500%20000']
+		
+
 
 HEADERS = {'user-agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36', 'accept': '*/*'}
 
@@ -42,28 +43,28 @@ def get_html(url, params=None):
 def get_content(html):
     soup = BeautifulSoup(html,'html.parser')
     items = soup.find_all('div', class_='a-info-top')
+    cars_list = []
     for item in items:
-        cars.append({
-            'post_id' : item.find('a', class_='ddl_product_link').get('data-product-id'),
+        cars_list.append({
+            'post_id' : int(item.find('a', class_='ddl_product_link').get('data-product-id')),
             'link' : HOST + item.find('a', class_='ddl_product_link').get('href')
         })
-    return cars 
+    return cars_list 
 
 def parse():
-	for url in URLs:
-		html = get_html(url)
-		if html.status_code == 200:
-			#cars = []
-			for page in range(1, 3):
-				html = get_html(url, params={'page': page})
-				#print(html.url)
+	for link in URL:
+		req = get_html(link)
+		if req.status_code == 200:
+			for page in range(1,3):
+				html = get_html(link,params={'page': page})
+				print(html.url)
 				cars.extend(get_content(html.text))
-				#print(cars)
-				
-			
+			#print(cars)
 		else:
 			print('Error')
+
 non_match = []
+
 def non_match_elements(list_a, list_b):
     for i in list_a:
         if i not in list_b:
@@ -102,10 +103,12 @@ async def send_welcome(message: types.Message):
 async def scheduled(wait_for):
 	while True:
 		await asyncio.sleep(wait_for)
+		global cars 
+		cars = []
+		global posts
+		posts = db.check_item_db()
 		parse()
 		non_match = non_match_elements(cars, posts)
-		#print("cars:", cars)
-		#print("posts:", posts)
 		for car in non_match:
 			db.send_to_db(car['post_id'], car['link'])
 			subscriptions = db.get_subscriptions()
@@ -118,7 +121,7 @@ async def scheduled(wait_for):
 
 # long polling
 if __name__ == "__main__":
-	dp.loop.create_task(scheduled(30))
+	dp.loop.create_task(scheduled(50))
 	#asyncio.run(scheduled(10))
 	executor.start_polling(dp, skip_updates=True)
 	
