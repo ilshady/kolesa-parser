@@ -40,9 +40,9 @@ class Queries:
     def check_item_db(self):
         """Получаем все записи с таблицы"""
         with self.connection:
-            result = self.cursor.execute('SELECT post_id,link FROM posts')
+            result = self.cursor.execute('SELECT post_id,link FROM posts order by id desc')
             result = self.cursor.fetchmany(120)
-            #print(result)
+            print(result)
             return result
     def send_to_db(self,post_id,link):
         with self.connection:
