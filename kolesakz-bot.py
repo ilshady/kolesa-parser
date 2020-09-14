@@ -57,7 +57,7 @@ def parse():
 		if req.status_code == 200:
 			for page in range(1,3):
 				html = get_html(link,params={'page': page})
-				print(html.url)
+				#print(html.url)
 				cars.extend(get_content(html.text))
 			#print(cars)
 		else:
@@ -121,7 +121,7 @@ async def scheduled(wait_for):
 
 # long polling
 if __name__ == "__main__":
-	dp.loop.create_task(scheduled(50))
+	dp.loop.create_task(scheduled(30))
 	#asyncio.run(scheduled(10))
 	executor.start_polling(dp, skip_updates=True)
 	
