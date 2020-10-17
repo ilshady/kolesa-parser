@@ -14,7 +14,6 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=config.API_TOKEN)
 dp = Dispatcher(bot)
 
-#connect to db
 con = pymysql.connect(
     host='us-cdbr-east-02.cleardb.com',
     port=3306,
@@ -22,12 +21,18 @@ con = pymysql.connect(
     password='0a1d4b3c',
     db='heroku_7e1e49bc691f425',
     charset='utf8mb4',
-    cursorclass=pymysql.cursors.DictCursor
+    cursorclass=pymysql.cursors.DictCursor,
+	autocommit=True
 )
 db = Queries(con)
+cursor = con.cursor()
 
 URL = ['https://kolesa.kz/cars/avtomobili-s-probegom/lexus/is-250/?auto-custom=2&year[from]=2008&year[to]=2011&price[to]=6%20000%20000']
+		
+
+
 HEADERS = {'user-agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36', 'accept': '*/*'}
+
 HOST = 'https://kolesa.kz'
 
 cars = []
@@ -37,18 +42,19 @@ def get_html(url, params=None):
     return req
 
 def get_content(html):
-    soup = BeautifulSoup(html,'html.parser')
-    items = soup.find_all('span', class_='a-el-info-title')
-    cars_list = []
-    for item in items:
-        cars_list.append({
-            'post_id' : int(item.find('a', class_='ddl_product_link').get('data-product-id')),
-            'link' : HOST + item.find('a', class_='ddl_product_link').get('href')
-        })
-    return cars_list 
+	soup = BeautifulSoup(html,'html.parser')
+	items = soup.find_all('div', class_='a-info-top')
+	cars_list = []
+	for item in items:
+		cars_list.append(Cars(post_id= int(item.find('a', class_='ddl_product_link').get('data-product-id'))))
+        # cars_list.append({
+        #     'post_id' : int(item.find('a', class_='ddl_product_link').get('data-product-id')),
+        #     'link' : HOST + item.find('a', class_='ddl_product_link').get('href')
+        # })
+		
+	return cars_list 
 
 def parse():
-	cars = []
 	for link in URL:
 		req = get_html(link)
 		if req.status_code == 200:
@@ -59,19 +65,40 @@ def parse():
 			#print(cars)
 		else:
 			print('Error')
-	return cars
+
+non_match = []
+
+class Cars:
+	
+	def __init__(self, post_id):
+		self.post_id = post_id
+	def __eq__(self, other):
+		if isinstance(other, Cars):
+			return self.post_id == other.post_id
+		return False
 
 def non_match_elements(list_a, list_b):
-	non_match = []
-	#to divide list in 2 cause it has duplicates
-	leng = len(list_a)/2
-	list_1 = list_a[:int(leng)]
-	for i in list_1:
-		if i not in list_b:
+	for i in list_a:
+		ifOneHave = False
+		if len(list(list_b)) == 0:
 			non_match.append(i)
+			break
+		for j in list(list_b):
+			print('car: {}, post: {}', i, j)
+			if i['post_id'] == j['post_id']:
+				ifOneHave = True
+		if ifOneHave == False:
+			non_match.append(i)
+		# if 
 	return non_match
 
-        
+async def check():
+    result = cursor.execute('SELECT post_id,link FROM posts order by id desc')
+    result = cursor.fetchmany(120)
+    return result
+
+
+
 
 #echo
 @dp.message_handler(commands=['subscribe'])
@@ -98,17 +125,20 @@ async def unsubscribe(message: types.Message):
 
 @dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
-	await message.reply("Здарова")
+	await message.reply("Привет перекупщикам!")
 
 async def scheduled(wait_for):
 	while True:
 		await asyncio.sleep(wait_for)
+		global cars 
+		cars = []
+		parse()
 		posts = db.check_item_db()
-		cars = parse()
 		non_match = non_match_elements(cars, posts)
 		for car in non_match:
 			db.send_to_db(car['post_id'], car['link'])
 			subscriptions = db.get_subscriptions()
+			con.commit()
 				# Отправка в телеграм
 			for s in subscriptions:
 				await bot.send_message(
@@ -118,7 +148,8 @@ async def scheduled(wait_for):
 
 # long polling
 if __name__ == "__main__":
-	dp.loop.create_task(scheduled(40))
+	dp.loop.create_task(scheduled(10))
+	#asyncio.run(scheduled(10))
 	executor.start_polling(dp, skip_updates=True)
 	
 	

@@ -42,7 +42,6 @@ class Queries:
         with self.connection:
             result = self.cursor.execute('SELECT post_id,link FROM posts order by id desc')
             result = self.cursor.fetchmany(120)
-            print("checked")
             return result
     def send_to_db(self,post_id,link):
         with self.connection:
