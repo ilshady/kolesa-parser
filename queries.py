@@ -63,10 +63,12 @@ class Queries:
     
     def get_link_from_db(self,user_id):
         with self.connection:
+            links = []
             result = self.cursor.execute("SELECT url FROM links WHERE user_id = '%s'", user_id)
             result = self.cursor.fetchall()
-            return result
-
+            for link in result:
+                links.extend(link.values())
+            return links
 
     def close(self):
         """Закрываем соединение с БД"""
