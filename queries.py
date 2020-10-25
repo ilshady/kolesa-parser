@@ -7,6 +7,7 @@ class Queries:
         """Подключаемся к БД и сохраняем курсор соединения"""
         self.connection = database
         self.cursor = self.connection.cursor()
+        self.connection.autocommit = True
         #print("connected")
 
     def get_subscriptions(self, status = True):
@@ -47,6 +48,25 @@ class Queries:
         with self.connection:
             #print("send_to_db")
             return self.cursor.execute("INSERT INTO posts (post_id, link ) VALUES (%s,%s)",(post_id, link))
+    
+    def send_links_to_db(self,user_id,url):
+        with self.connection:
+            return self.cursor.execute("INSERT INTO links (user_id, url ) VALUES (%s,%s)",(user_id, url))
+    
+    def check_link_on_db(self,url):
+        with self.connection:
+            result = self.cursor.execute("SELECT * FROM links WHERE 'url' = %s", url)
+            result = self.cursor.fetchall()
+            print(url)
+            print(result)
+            return bool(len(result))
+    
+    def get_link_from_db(self,user_id):
+        with self.connection:
+            result = self.cursor.execute("SELECT url FROM links WHERE user_id = '%s'", user_id)
+            result = self.cursor.fetchall()
+            return result
+
 
     def close(self):
         """Закрываем соединение с БД"""
